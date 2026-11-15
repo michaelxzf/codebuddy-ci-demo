@@ -16,6 +16,7 @@ const comments = r.findings.filter((f) => f.file && f.line > 0).map((f) => ({
   body: `${icon[f.severity] || ''} **${f.title}**\n\n${f.detail}${f.suggestion ? `\n\n**Suggested fix:** ${f.suggestion}` : ''}`,
 }));
 const post = (payload) => execFileSync('gh', ['api', `repos/${repo}/pulls/${pr}/reviews`, '--input', '-'], { input: JSON.stringify(payload), stdio: ['pipe', 'pipe', 'inherit'] });
-try { post({ event: 'COMMENT', body, comments }); console.log(`posted review with ${comments.length} inline comments`); }
-catch { post({ event: 'COMMENT', body }); console.log('inline positions rejected; posted summary review only'); }
+const commit_id = process.env.HEAD_SHA; // anchor comments to the reviewed commit (a bot fix may land meanwhile)
+try { post({ commit_id, event: 'COMMENT', body, comments }); console.log(`posted review with ${comments.length} inline comments`); }
+catch { post({ commit_id, event: 'COMMENT', body }); console.log('inline positions rejected; posted summary review only'); }
 fs.writeFileSync('review.md', body);
