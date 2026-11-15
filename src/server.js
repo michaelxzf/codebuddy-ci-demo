@@ -29,6 +29,18 @@ export function handler(req, res) {
       res.end(data);
     });
   }
+  const items = url.pathname.match(/^\/carts\/(\d+)\/items$/);
+  if (req.method === 'POST' && items) {
+    let body = '';
+    req.on('data', (d) => (body += d));
+    return req.on('end', () => {
+      const { sku, qty } = JSON.parse(body);
+      const cart = carts.get(items[1]);
+      const product = inventory.get(sku);
+      cart.add(sku, product.price, qty);
+      json(res, 200, { total: cart.total() });
+    });
+  }
   if (req.method === 'POST' && url.pathname === '/carts') {
     const id = String(carts.size + 1);
     carts.set(id, new Cart());

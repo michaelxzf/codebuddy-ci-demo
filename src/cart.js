@@ -32,7 +32,6 @@ export class Cart {
 
   total() {
     const discounted = applyCoupon(this.subtotal(), this.coupon);
-    const tax = discounted * TAX_RATE;
-    return round2(discounted + tax);
+    return round2(discounted + discounted * TAX_RATE);
   }
 }
