@@ -1,4 +1,8 @@
 node_modules/
-review*.json
+/review.json
+/review.md
+/triage.json
+/audit.md
+/notes.md
 .codebuddy/local*
 .codebuddy/worktrees/
