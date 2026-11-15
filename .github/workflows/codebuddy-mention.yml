@@ -6,6 +6,7 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
+  actions: write
 jobs:
   codebuddy:
     # trusted humans only (prompt-injection guard on a public repo)
@@ -50,9 +51,11 @@ jobs:
           git add -A && git commit -m "feat: address #$NUMBER via @codebuddy" -m "$(tail -5 /tmp/summary.txt)"
           if [ "$IS_PR" = "true" ]; then
             git push
+            gh workflow run ci.yml --ref "$(git branch --show-current)"
             gh pr comment "$NUMBER" --body "$(printf '🤖 **CodeBuddy pushed %s**\n\n%s' "$(git rev-parse --short HEAD)" "$(cat /tmp/summary.txt)")"
           else
             git push -u origin "codebuddy/issue-$NUMBER"
+            gh workflow run ci.yml --ref "codebuddy/issue-$NUMBER"
             url=$(gh pr create --title "feat: $TITLE" --body "$(printf 'Closes #%s\n\n%s\n\n_Opened by CodeBuddy Code from an @codebuddy mention._' "$NUMBER" "$(cat /tmp/summary.txt)")")
             gh issue comment "$NUMBER" --body "🤖 CodeBuddy opened $url"
           fi
