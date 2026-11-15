@@ -22,3 +22,10 @@ test('tax is charged on the discounted amount', () => {
   // 100 - 20% = 80; 80 * 1.08 = 86.40
   assert.equal(c.total(), 86.4);
 });
+
+test('total() throws when the coupon has expired', () => {
+  const c = new Cart()
+    .add('tee-blue', 100)
+    .useCoupon({ code: 'OLD20', percent: 20, expiresAt: '2000-01-01T00:00:00.000Z' });
+  assert.throws(() => c.total(), /coupon expired: OLD20/);
+});
