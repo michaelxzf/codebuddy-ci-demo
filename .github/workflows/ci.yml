@@ -1,0 +1,13 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: [self-hosted, codebuddy]
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --version && npm test

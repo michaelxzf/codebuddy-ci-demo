@@ -1,0 +1,12 @@
+{
+  "name": "tinyshop-api",
+  "version": "0.3.0",
+  "description": "Tiny shop API used as a sandbox for CodeBuddy Code CI/CD automation demos",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

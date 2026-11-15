@@ -1,0 +1,26 @@
+name: CodeBuddy Release Notes
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  notes:
+    runs-on: [self-hosted, codebuddy]
+    timeout-minutes: 10
+    env:
+      CODEBUDDY_API_KEY: ${{ secrets.CODEBUDDY_API_KEY }}
+      CODEBUDDY_INTERNET_ENVIRONMENT: ${{ vars.CODEBUDDY_INTERNET_ENVIRONMENT }}
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Draft notes
+        run: |
+          prev=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          git log --no-merges --pretty='- %s (%h)' "$prev..$TAG" > /tmp/changes.txt
+          codebuddy -p "Write release notes for tinyshop-api $TAG from the commit list in /tmp/changes.txt. \
+          Sections: Highlights (2-3 bullets, user-facing), Fixes, Internal. Keep commit hashes. No preamble." \
+            --allowedTools "Read Bash(cat /tmp/changes.txt) Bash(git show*)" --max-turns 8 > notes.md
+          gh release create "$TAG" --title "tinyshop-api $TAG" -F notes.md

@@ -1,0 +1,46 @@
+name: CodeBuddy CI Auto-fix
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+jobs:
+  autofix:
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      !startsWith(github.event.workflow_run.head_commit.message, 'fix(ci): CodeBuddy auto-fix')
+    runs-on: [self-hosted, codebuddy]
+    timeout-minutes: 20
+    env:
+      CODEBUDDY_API_KEY: ${{ secrets.CODEBUDDY_API_KEY }}
+      CODEBUDDY_INTERNET_ENVIRONMENT: ${{ vars.CODEBUDDY_INTERNET_ENVIRONMENT }}
+      GH_TOKEN: ${{ github.token }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      BRANCH: ${{ github.event.workflow_run.head_branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: '${{ github.event.workflow_run.head_branch }}', fetch-depth: 0 }
+      - name: Collect failing log
+        run: gh run view "$RUN_ID" --log-failed | tail -120 > /tmp/ci-failure.log
+      - name: CodeBuddy fix
+        run: |
+          codebuddy -p "CI failed on branch $BRANCH. The failing log is in /tmp/ci-failure.log. \
+          Find the root cause in the code (not the tests, unless a test is clearly wrong), apply the minimal fix, run npm test until green. \
+          Finish with: ROOT CAUSE: <one line> / FIX: <one line>." \
+            --permission-mode acceptEdits \
+            --allowedTools "Read Grep Glob Edit Bash(npm test) Bash(node --test*) Bash(git diff*) Bash(cat /tmp/ci-failure.log)" \
+            --max-turns 30 | tee /tmp/fix.txt
+      - name: Push fix
+        run: |
+          npm test
+          git diff --quiet && { echo "no change"; exit 0; }
+          git config user.name "codebuddy-bot"; git config user.email "codebuddy-bot@users.noreply.github.com"
+          git commit -am "fix(ci): CodeBuddy auto-fix for run $RUN_ID" -m "$(tail -3 /tmp/fix.txt)"
+          git push
+          pr=$(gh pr list --head "$BRANCH" --json number -q '.[0].number')
+          [ -n "$pr" ] && gh pr comment "$pr" --body "$(printf '🛠️ **CodeBuddy auto-fix pushed** for failed run %s\n\n%s' "$RUN_ID" "$(tail -3 /tmp/fix.txt)")"

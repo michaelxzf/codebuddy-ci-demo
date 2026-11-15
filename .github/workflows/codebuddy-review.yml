@@ -1,0 +1,39 @@
+name: CodeBuddy PR Review
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: cb-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  review:
+    # same-repo PRs only: never run AI with secrets on untrusted fork code
+    if: github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft
+    runs-on: [self-hosted, codebuddy]
+    timeout-minutes: 15
+    env:
+      CODEBUDDY_API_KEY: ${{ secrets.CODEBUDDY_API_KEY }}
+      CODEBUDDY_INTERNET_ENVIRONMENT: ${{ vars.CODEBUDDY_INTERNET_ENVIRONMENT }}
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number }}
+      BASE: ${{ github.event.pull_request.base.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: CodeBuddy review (structured JSON)
+        run: |
+          codebuddy --version
+          git diff "origin/$BASE...HEAD" > /tmp/pr.diff
+          codebuddy -p "You are reviewing PR #$PR of tinyshop-api. Follow the review checklist in CODEBUDDY.md. \
+          The unified diff is in /tmp/pr.diff; read changed files for context. Only report real, actionable issues on changed lines. \
+          Use the exact new-file line number for each finding." \
+            --output-format json \
+            --json-schema "$(cat .github/review-schema.json)" \
+            --permission-mode default \
+            --allowedTools "Read Grep Glob Bash(git diff*) Bash(git log*) Bash(cat /tmp/pr.diff)" \
+            --max-turns 20 > review.json
+      - name: Post review to PR
+        run: node scripts/post-review.mjs review.json

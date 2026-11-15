@@ -1,0 +1,1 @@
+{"type":"object","properties":{"labels":{"type":"array","items":{"type":"string","enum":["bug","enhancement","question","security","docs","good first issue"]}},"priority":{"type":"string","enum":["P0","P1","P2","P3"]},"summary":{"type":"string"},"next_step":{"type":"string"}},"required":["labels","priority","summary","next_step"]}

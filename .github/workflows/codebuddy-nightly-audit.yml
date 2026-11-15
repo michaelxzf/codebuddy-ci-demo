@@ -1,0 +1,27 @@
+name: CodeBuddy Nightly Audit
+on:
+  schedule:
+    - cron: '0 18 * * *'   # 02:00 Asia/Shanghai
+  workflow_dispatch:
+permissions:
+  issues: write
+  contents: read
+jobs:
+  audit:
+    runs-on: [self-hosted, codebuddy]
+    timeout-minutes: 20
+    env:
+      CODEBUDDY_API_KEY: ${{ secrets.CODEBUDDY_API_KEY }}
+      CODEBUDDY_INTERNET_ENVIRONMENT: ${{ vars.CODEBUDDY_INTERNET_ENVIRONMENT }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit
+        run: |
+          codebuddy -p "Audit this repository for security issues, missing input validation, untested code paths and stale TODOs. \
+          Output a Markdown report: a summary table (Area | Finding | Severity | File) then up to 8 prioritised actions. No preamble." \
+            --allowedTools "Read Grep Glob Bash(npm test) Bash(git log*)" --max-turns 25 > audit.md
+      - name: Open or update audit issue
+        run: |
+          n=$(gh issue list --label audit --state open --json number -q '.[0].number')
+          if [ -n "$n" ]; then gh issue comment "$n" -F audit.md; else gh issue create --title "Nightly CodeBuddy audit" --label audit -F audit.md; fi
