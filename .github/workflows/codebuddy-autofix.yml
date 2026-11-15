@@ -33,7 +33,7 @@ jobs:
           Find the root cause in the code (not the tests, unless a test is clearly wrong), apply the minimal fix, run npm test until green. \
           Finish with: ROOT CAUSE: <one line> / FIX: <one line>." \
             --permission-mode acceptEdits \
-            --allowedTools "Read Grep Glob Edit Bash(npm test) Bash(node --test*) Bash(git diff*)" \
+            --allowedTools "Read Grep Glob Edit Bash(npm test*) Bash(node --test*) Bash(git diff*)" \
             --max-turns 30 < /tmp/ci-failure.log | tee /tmp/fix.txt
       - name: Push fix
         run: |

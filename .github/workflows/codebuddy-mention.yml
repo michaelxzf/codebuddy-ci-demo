@@ -42,7 +42,7 @@ jobs:
           Implement the request in this repository following CODEBUDDY.md, add or update tests, and run npm test until it passes. \
           Do not commit; finish with a 3-line summary of what you changed." \
             --permission-mode acceptEdits \
-            --allowedTools "Read Grep Glob Edit Write Bash(npm test) Bash(node --test*) Bash(git diff*) Bash(git status)" \
+            --allowedTools "Read Grep Glob Edit Write Bash(npm test*) Bash(node --test*) Bash(git diff*) Bash(git status)" \
             --max-turns 40 < /tmp/task.md | tee /tmp/summary.txt
       - name: Commit, push, report
         run: |
