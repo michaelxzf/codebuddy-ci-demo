@@ -23,5 +23,6 @@ jobs:
             --allowedTools "Read Grep Glob Bash(npm test) Bash(git log*)" --max-turns 25 > audit.md
       - name: Open or update audit issue
         run: |
+          gh label create audit --color 0052D9 --force >/dev/null
           n=$(gh issue list --label audit --state open --json number -q '.[0].number')
           if [ -n "$n" ]; then gh issue comment "$n" -F audit.md; else gh issue create --title "Nightly CodeBuddy audit" --label audit -F audit.md; fi

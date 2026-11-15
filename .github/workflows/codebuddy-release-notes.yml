@@ -20,7 +20,8 @@ jobs:
         run: |
           prev=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || git rev-list --max-parents=0 HEAD)
           git log --no-merges --pretty='- %s (%h)' "$prev..$TAG" > /tmp/changes.txt
-          codebuddy -p "Write release notes for tinyshop-api $TAG from the commit list in /tmp/changes.txt. \
+          codebuddy -p "Write release notes for tinyshop-api $TAG from the commit list on stdin. \
           Sections: Highlights (2-3 bullets, user-facing), Fixes, Internal. Keep commit hashes. No preamble." \
-            --allowedTools "Read Bash(cat /tmp/changes.txt) Bash(git show*)" --max-turns 8 > notes.md
+            --allowedTools "Read Bash(git show*)" --max-turns 8 < /tmp/changes.txt > notes.md
+          grep -q "^## \|^### \|Highlights" notes.md || { echo "notes look wrong, not publishing"; cat notes.md; exit 1; }
           gh release create "$TAG" --title "tinyshop-api $TAG" -F notes.md

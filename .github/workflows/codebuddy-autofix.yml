@@ -29,12 +29,12 @@ jobs:
         run: gh run view "$RUN_ID" --log-failed | tail -120 > /tmp/ci-failure.log
       - name: CodeBuddy fix
         run: |
-          codebuddy -p "CI failed on branch $BRANCH. The failing log is in /tmp/ci-failure.log. \
+          codebuddy -p "CI failed on branch $BRANCH. The failing log is on stdin. \
           Find the root cause in the code (not the tests, unless a test is clearly wrong), apply the minimal fix, run npm test until green. \
           Finish with: ROOT CAUSE: <one line> / FIX: <one line>." \
             --permission-mode acceptEdits \
-            --allowedTools "Read Grep Glob Edit Bash(npm test) Bash(node --test*) Bash(git diff*) Bash(cat /tmp/ci-failure.log)" \
-            --max-turns 30 | tee /tmp/fix.txt
+            --allowedTools "Read Grep Glob Edit Bash(npm test) Bash(node --test*) Bash(git diff*)" \
+            --max-turns 30 < /tmp/ci-failure.log | tee /tmp/fix.txt
       - name: Push fix
         run: |
           npm test
