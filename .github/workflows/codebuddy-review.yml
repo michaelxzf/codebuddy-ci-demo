@@ -29,12 +29,12 @@ jobs:
           codebuddy --version
           git diff "origin/$BASE...HEAD" > /tmp/pr.diff
           codebuddy -p "You are reviewing PR #$PR of tinyshop-api. Follow the review checklist in CODEBUDDY.md. \
-          The unified diff is in /tmp/pr.diff; read changed files for context. Only report real, actionable issues on changed lines. \
+          The unified diff is on stdin; read changed files in the workspace for context. Only report real, actionable issues on changed lines. \
           Use the exact new-file line number for each finding." \
             --output-format json \
             --json-schema "$(cat .github/review-schema.json)" \
             --permission-mode default \
-            --allowedTools "Read Grep Glob Bash(git diff*) Bash(git log*) Bash(cat /tmp/pr.diff)" \
-            --max-turns 20 > review.json
+            --allowedTools "Read Grep Glob Bash(git diff*) Bash(git log*)" \
+            --max-turns 20 < /tmp/pr.diff > review.json
       - name: Post review to PR
         run: node scripts/post-review.mjs review.json
