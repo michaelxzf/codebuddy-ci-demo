@@ -17,8 +17,14 @@ export function applyCoupon(subtotal, coupon, now = new Date()) {
   if (coupon.percent <= 0 || coupon.percent > 100) {
     throw new RangeError(`invalid coupon percent: ${coupon.percent}`);
   }
-  if (coupon.expiresAt && now > new Date(coupon.expiresAt)) {
-    throw new Error(`coupon expired: ${coupon.code} (expired ${coupon.expiresAt})`);
+  if (coupon.expiresAt) {
+    const expiry = new Date(coupon.expiresAt);
+    if (Number.isNaN(expiry.getTime())) {
+      throw new RangeError(`invalid coupon expiresAt: ${coupon.expiresAt}`);
+    }
+    if (now > expiry) {
+      throw new Error(`coupon expired: ${coupon.code} (expired ${coupon.expiresAt})`);
+    }
   }
   return subtotal - subtotal * (coupon.percent / 100);
 }

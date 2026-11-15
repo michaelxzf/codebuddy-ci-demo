@@ -24,6 +24,11 @@ test('applyCoupon rejects an expired coupon', () => {
   assert.throws(() => applyCoupon(50, coupon), /coupon expired: OLD/);
 });
 
+test('applyCoupon rejects a non-ISO expiresAt', () => {
+  const coupon = { code: 'BADDATE', percent: 10, expiresAt: 'not-a-date' };
+  assert.throws(() => applyCoupon(50, coupon), RangeError);
+});
+
 test('applyCoupon checks expiry against a supplied clock', () => {
   const coupon = { code: 'SOON', percent: 10, expiresAt: '2024-06-01T00:00:00.000Z' };
   const before = new Date('2024-05-31T00:00:00.000Z');
